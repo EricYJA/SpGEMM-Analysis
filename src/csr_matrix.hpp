@@ -61,7 +61,8 @@ class CSR_matrix{
         CSR_matrix(u_int r, u_int c){
             row_num = r;
             col_num = c;
-            mtx = (double*) malloc(r * c * sizeof(double));
+            // mtx = (double*) malloc(r * c * sizeof(double));
+            csr_row = (u_int*) malloc(r * sizeof(u_int));
             // mtx[r * c];
         }
 
@@ -180,6 +181,16 @@ class CSR_matrix{
                     }
                 }
             }
+        };
+
+        void resize(u_int r_n, u_int c_n, u_int n){
+            row_num = r_n;
+            col_num = c_n;
+            nnz = n;
+            csr_col = (u_int*) malloc(nnz * sizeof(u_int));
+            csr_row = (u_int*) malloc(row_num * sizeof(u_int));
+            csr_val = (double*) malloc(nnz * sizeof(double));
+            // mtx = 
         }
 
 

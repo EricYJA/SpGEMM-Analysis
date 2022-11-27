@@ -1,4 +1,6 @@
 #include "csr_matrix.hpp"
+#include "csc_matrix.hpp"
+
 
 int main(){
 
@@ -17,7 +19,9 @@ int main(){
     u_int tri_r = 3;
     u_int tri_c = 3;
 
-    CSR_matrix tri_mtx = CSR_matrix(tri_r, tri_c);
+    CSR_matrix csr_tri_mtx = CSR_matrix(tri_r, tri_c);
+    CSC_matrix csc_tri_mtx = CSC_matrix(tri_r, tri_c);
+
 
     MTX_triplet tri1 = MTX_triplet(0, 0, 1.0);
     MTX_triplet tri2 = MTX_triplet(0, 1, 4.0);
@@ -37,6 +41,10 @@ int main(){
 
     printf("vector done (: \n");
     printf("test setFromTri:\n");
-    tri_mtx.setFromTriplets(tri_vec);
+    printf("print CSR matrix\n");
+    csr_tri_mtx.setFromTriplets(tri_vec);
+    printf("\nprint CSC matrix\n");
+    csc_tri_mtx.setFromTriplets(tri_vec);
+
 
 }
