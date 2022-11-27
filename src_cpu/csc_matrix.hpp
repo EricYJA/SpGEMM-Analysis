@@ -50,10 +50,6 @@ class CSC_matrix{
         u_int col_num;
         u_int nnz = 0;
 
-        // CSC_matrix();
-        // CSC_matrix(u_int row_num, u_int col_num);
-        // CSC_matrix(u_int* row, u_int* col, double* val);
-
         /*csc constructor - empty matrix*/
         CSC_matrix(){
 
