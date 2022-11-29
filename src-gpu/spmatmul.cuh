@@ -38,10 +38,11 @@ void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice
   int *c_nnz;
   cudaMallocManaged(&c_nnz, sizeof(int));
   countNnzKernel(a_mat, b_mat, nnz_num);
+  
 }
 
 template <typename T>
-__global__ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C) {
+__global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C) {
     int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
     int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
 
@@ -69,7 +70,7 @@ __global__ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevi
 
 template <typename T>
 void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C){ 
-    spgemmRowWiseNnzKernel<<<1, 1>>>(A, B, C); // TODO
+    countNnzKernel<<<1, 1>>>(A, B, C); // TODO
     C.resize(A.m_row_size, A.m_col_size, C.nnz);
     // TODO: record time
     spgemmInnProMul<<<1, 1>>>(A, B, C);
