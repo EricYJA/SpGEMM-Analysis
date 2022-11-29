@@ -50,7 +50,7 @@ struct CSCMatDevice
   u_int m_nnz;
 };
 
-
+// Flora TODO:
 void resize(u_int rows, u_int cols, u_int nnz){
     // cudaMallocManage
 }
