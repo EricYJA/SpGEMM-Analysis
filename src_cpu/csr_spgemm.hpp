@@ -75,9 +75,6 @@ void spgemmRowWise(CSR_matrix A,
             }
         }
     }
-
-    
-
 }
 
 
