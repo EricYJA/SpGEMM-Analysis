@@ -2,7 +2,8 @@
 
 #include "matrix.cuh"
 
-__global__ spgemmRowWiseMul() {
+template <typename T>
+__global__ void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat) {
   
 }
 
