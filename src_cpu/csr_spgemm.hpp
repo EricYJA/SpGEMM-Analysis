@@ -73,9 +73,6 @@ void spgemmRowWise(CSR_matrix A, CSR_matrix B, CSR_matrix Z){
             }
         }
     }
-
-    
-
 }
 
 
