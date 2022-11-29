@@ -12,7 +12,7 @@ struct CSRMatDevice
         m_col_size(col_size),
         m_nnz(nnz_size)
   {
-    CUDAERR(cudaMallocManaged(&m_d_rowptr, row_size * sizeof(T)));
+    CUDAERR(cudaMallocManaged(&m_d_rowptr, (m_row_size+1) * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_colidx, m_nnz * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
@@ -36,7 +36,7 @@ struct CSCMatDevice
         m_col_size(col_size),
         m_nnz(nnz_size)
   {
-    CUDAERR(cudaMallocManaged(&m_d_colptr, m_col_size * sizeof(T)));
+    CUDAERR(cudaMallocManaged(&m_d_colptr, (m_col_size+1) * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_rowidx, m_nnz * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
@@ -64,7 +64,7 @@ struct COOMatDevice
         m_col_size(col_size),
         m_nnz(nnz_size)
   {
-    CUDAERR(cudaMallocManaged(&m_d_colptr, m_nnz * sizeof(T)));
+    CUDAERR(cudaMallocManaged(&m_d_colidx, m_nnz * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_rowidx, m_nnz * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }

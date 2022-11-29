@@ -23,7 +23,7 @@ __global__ void countNnzKernel(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, int
         int nz_idx = b_mat.m_d_colidx[j];
         if (mask[nz_idx] != 1)
         {
-          mask[k] = 1;
+          mask[nz_idx] = 1;
           atomicAdd(&nnz_num[0], 1);
         }
       }
@@ -37,7 +37,7 @@ void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice
 {
   int *c_nnz;
   cudaMallocManaged(&c_nnz, sizeof(int));
-  countNnzKernel(a_mat, b_mat, nnz_num);
+  countNnzKernel(a_mat, b_mat, c_nnz);
   
 }
 
@@ -48,12 +48,12 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRM
 
     int N = A.m_row_size;
     if(csr_tid < N){
-        uint32_t csr_start = A.m_d_rowptr[csr_tid];
-        uint32_t csr_end = A.m_d_row_ptr[csr_tid + 1];  
-        uint32_t csc_start = B.m_d_col_ptr[csc_tid];
-        uint32_t csc_end = B.m_d_col_ptr[csc_tid + 1];
+        uint csr_start = A.m_d_rowptr[csr_tid];
+        uint csr_end = A.m_d_rowptr[csr_tid + 1];  
+        uint csc_start = B.m_d_colptr[csc_tid];
+        uint csc_end = B.m_d_colptr[csc_tid + 1];
 
-        double sum = 0.0;
+        T sum = 0.0;
         
         for(int k = csr_tid; k < csr_start - csr_end; ++k){
             for(int n = 0; n < csc_start - csc_end; ++n){
@@ -64,16 +64,18 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRM
         }
 
         C.m_d_val[csr_tid] = sum;
+        printf("sum: %f ", sum);
         C.m_d_colidx[csr_tid] = csc_start;
+        printf("col idx: %u", csc_start);
     }
 }
 
 template <typename T>
 void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C){ 
-    countNnzKernel<<<1, 1>>>(A, B, C); // TODO
-    C.resize(A.m_row_size, A.m_col_size, C.nnz);
+    // countNnzKernel<<<1, 1>>>(A, B, C); // TODO
+    // C.resize(A.m_row_size, A.m_col_size, C.nnz);
     // TODO: record time
-    spgemmInnProMul<<<1, 1>>>(A, B, C);
+    spgemmInnProMulKernel<<<1, 1>>>(A, B, C);
 }
 
 template <typename T>
@@ -83,10 +85,10 @@ __global__ void spgemmOutProMul(CSCMatDevice<T> A, CSRMatDevice<T> B, COOMatDevi
 
     int N = A.m_row_size;
     if(csr_tid < N){
-        uint32_t csr_start = A.m_d_col_ptr[csc_tid];
-        uint32_t csr_end = A.m_d_col_ptr[csc_tid + 1];  
-        uint32_t csc_start = B.m_d_row_ptr[csr_tid];
-        uint32_t csc_end = B.m_d_row_ptr[csr_tid + 1];
+        uint csr_start = A.m_d_colptr[csc_tid];
+        uint csr_end = A.m_d_colptr[csc_tid + 1];  
+        uint csc_start = B.m_d_rowptr[csr_tid];
+        uint csc_end = B.m_d_rowptr[csr_tid + 1];
 
         double sum = 0.0;
 
