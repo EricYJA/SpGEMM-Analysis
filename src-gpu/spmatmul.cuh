@@ -3,12 +3,19 @@
 #include "matrix.cuh"
 
 template <typename T>
-__global__ void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat) {
+__global__ void spgemmRowWiseNnzKernel(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice<T> c_mat) {
   
 }
 
 template <typename T>
-__global__ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C, u_int* temp_row) {
+void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice<T> c_mat) {
+  u_int c_nnz = a_mat.m_nnz > b_mat.m_nnz ? a_mat.m_nnz : b_mat.m_nnz;
+  
+  
+}
+
+template <typename T>
+__global__ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C) {
     int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
     int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
 
@@ -31,15 +38,12 @@ __global__ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevi
 
         C.m_d_val[csr_tid] = sum;
         C.m_d_colidx[csr_tid] = csc_start;
-        temp_row[csr_tid] = csr_start;
     }
 }
 
 template <typename T>
 void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C){ 
     int nnz = 0;
-    u_int temp_row[nnz];
     C.resize(A.m_row_size, A.m_col_size, nnz);
-    spgemmInnProMul<<<1, 1>>>(A, B, C, temp_row);
-    C.getRowPtr(*temp_row);
+    spgemmInnProMul<<<1, 1>>>(A, B, C);
 }
