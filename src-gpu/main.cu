@@ -10,7 +10,7 @@ int main() {
   u_int test = 3;
   CSRMatDevice<float> a_mat(test, test, test);
 
-
+  
   /* test inner product*/
   CSRMatDevice<float> A(4, 4, 9);
   CSCMatDevice<float> B(4, 4, 9);
@@ -37,11 +37,18 @@ int main() {
 
   spgemmInnProMul<float>(A, B, C);
 
-  printf("%u\n",C.m_d_rowptr[1]);
-  for(int i = 0; i < 9; ++i){
 
+  printf("row ptr:\n");
+  for(int i = 0; i < 9; ++i){
+    printf("%u, ",C.m_d_rowptr[i]);
   }
-  printf("%u\n",C.m_d_colidx[2]);
+
+  printf("\ncol idx:\n");
+
+  for(int i = 0; i < 9; ++i){
+    printf("%u,",C.m_d_colidx[i]);
+  }
+  printf("\n");
 
   return 0;
 }
