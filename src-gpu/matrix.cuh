@@ -24,8 +24,18 @@ struct CSRMatDevice
   u_int m_row_size;
   u_int m_col_size;
   u_int m_nnz;
-};
 
+
+  void sortAndTrim(){
+  
+  };
+
+  void getRowPtr(u_int* temp_row){
+    // int colidx_length = sizeof(m_d_colidx);
+
+
+  };
+};
 
 
 template <typename T>
@@ -49,3 +59,8 @@ struct CSCMatDevice
   u_int m_col_size;
   u_int m_nnz;
 };
+
+
+void resize(u_int rows, u_int cols, u_int nnz){
+    // cudaMallocManage
+}

@@ -68,11 +68,6 @@ public:
         csr_val = val;
         csr_row = row;
         csr_col = col;
-
-        /* if valid */
-
-        // u_int nnz = row.back();
-        // u_int num_rows =
     }
 
     /* set value - array */
