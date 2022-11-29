@@ -1,9 +1,7 @@
 #include "csr_matrix.hpp"
 #include "csc_matrix.hpp"
 
-
-int main(){
-
+void mtxCompressTest(CSR_matrix csr_tri_mtx, CSC_matrix csc_tri_mtx){
     double val_arr[9] = {1.0, 3.0, 2.0, 4.0, 5.0, 7.0, 8.0, 9.0, 6.0};
     u_int row_arr[5] = {0, 2, 4, 7, 9};
     u_int col_arr[9] = {0, 1, 1, 2, 0, 3, 4, 2, 4};
@@ -19,8 +17,8 @@ int main(){
     u_int tri_r = 3;
     u_int tri_c = 3;
 
-    CSR_matrix csr_tri_mtx = CSR_matrix(tri_r, tri_c);
-    CSC_matrix csc_tri_mtx = CSC_matrix(tri_r, tri_c);
+    csr_tri_mtx = CSR_matrix(tri_r, tri_c);
+    csc_tri_mtx = CSC_matrix(tri_r, tri_c);
 
 
     MTX_triplet tri1 = MTX_triplet(0, 0, 1.0);
@@ -45,6 +43,22 @@ int main(){
     csr_tri_mtx.setFromTriplets(tri_vec);
     printf("\nprint CSC matrix\n");
     csc_tri_mtx.setFromTriplets(tri_vec);
+}
+
+void spGEMMTest(CSR_matrix csr_a, CSR_matrix csr_b, CSC_matrix csc_b){
+    printf("\nrow wise test \n");
+    csr_spgemm::spgemmRowWise();
+    printf("\ninner prod test \n");
+    printf("\nouter prod test \n");
+
+}
+
+int main(){
+    CSR_matrix csr_tri_mtx = CSR_matrix();
+    CSC_matrix csc_tri_mtx = CSC_matrix();
+
+    mtxCompressTest(csr_tri_mtx, csc_tri_mtx);
+
 
 
 }

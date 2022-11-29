@@ -24,6 +24,7 @@ struct CSRMatDevice
   u_int m_row_size;
   u_int m_col_size;
   u_int m_nnz;
+
 };
 
 
@@ -48,6 +49,11 @@ struct CSCMatDevice
   u_int m_col_size;
   u_int m_nnz;
 };
+
+// Flora TODO:
+void resize(u_int rows, u_int cols, u_int nnz){
+    // cudaMallocManage
+}
 
 
 template <typename T>
