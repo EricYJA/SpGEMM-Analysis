@@ -44,7 +44,9 @@ u_int spgemmNnz(CSR_matrix A, CSC_matrix B){
 }
 
 
-void spgemmRowWise(CSR_matrix A, CSR_matrix B, CSR_matrix Z){
+void spgemmRowWise(CSR_matrix A, 
+                    CSR_matrix B, 
+                    CSR_matrix Z){
     int row = A.row_num;
     int col = B.col_num;
     // int B_r = B.row_num;
@@ -122,7 +124,7 @@ void spgemmInnPro(CSR_matrix A, CSC_matrix B, CSR_matrix Z){
                 for(u_int i = B.csc_col[n]; i < B.csc_col[n + 1]; ++i){
                     if(k == B.csc_row[i]){ // a's col idx == b's row idx
                         // TODO: parallel
-                        z_val += a_val * B.csc_val[i];                    
+                        z_val += a_val * B.csc_val[i];
                     }
                 }
                 
