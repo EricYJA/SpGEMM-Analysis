@@ -1,12 +1,11 @@
 #include <vector>
+#include <string>
+#include <utility>
+#include <cassert>
+#include <iostream>
 
 #include "matrix.cuh"
 #include "spmatmul.cuh"
-
-template <typename T_ELEM>
-int loadMMSparseMatrix(char *filename, char elem_type, bool csrFormat, int *m,
-                       int *n, int *nnz, T_ELEM **aVal, int **aRowInd,
-                       int **aColInd, int extendSymMatrix);
 
 __global__ void testMemKernel(CSRMatDevice<float> spmat)
 {
@@ -37,23 +36,6 @@ void testSetMatData(CSRMatDevice<float> &spmat, std::vector<int> &a_rp_vec, std:
   }
 }
 
-void testload()
-{
-  int rowsA = 0; /* number of rows of A */
-  int colsA = 0; /* number of columns of A */
-  int nnzA = 0;  /* number of nonzeros of A */
-
-  int *h_csrRowPtrA = NULL;
-  int *h_csrColIndA = NULL;
-  float *h_csrValA = NULL;
-
-  loadMMSparseMatrix<float>("../TestMtx/cage3.mtx", 'd', true, &rowsA,
-                            &colsA, &nnzA, &h_csrValA, &h_csrRowPtrA,
-                            &h_csrColIndA, true);
-
-  printf("%d, %d, %d\n", rowsA, colsA, nnzA);
-}
-
 void testNnz()
 {
   std::vector<int> a_rp_vec = {0, 1, 2, 4};
@@ -75,8 +57,8 @@ void testNnz()
   // countNnzKernel<float><<<1, 16>>>(A, B, nnz_num);
   // cudaDeviceSynchronize();
 
-  // testMemKernel<<<1, 8>>>(A);
-  // cudaDeviceSynchronize();
+  testMemKernel<<<1, 8>>>(A);
+  cudaDeviceSynchronize();
 }
 
 void testRowWise()
@@ -91,15 +73,21 @@ void testRowWise()
   testSetMatData(A, a_rp_vec, a_ci_vec, a_va_vec);
   testSetMatData(B, a_rp_vec, a_ci_vec, a_va_vec);
 
-  int nnz_num = countCsrCsrNnzHost<float>(A, B);
-  printf("%d\n", nnz_num);
+  CSRMatDevice<float> C("../TestMtx/cage3.mtx");
+  CSRMatDevice<float> D("../TestMtx/cage3.mtx");
 
-  int flat_size = A.m_row_size * B.m_col_size;
-  printf("f_size: %d\n", flat_size); 
-  float* c_arr;
+  printf("%d, %d, %d\n", C.m_d_rowptr[0], C.m_d_rowptr[1], C.m_d_rowptr[2]);
+
+  // testMemKernel<<<1, 8>>>(C);
+  // cudaDeviceSynchronize();
+
+  int flat_size = C.m_row_size * D.m_col_size;
+  printf("f_size: %d\n", flat_size);
+  float *c_arr;
   cudaMallocManaged(&c_arr, flat_size * sizeof(float));
-  spgemmRowWiseMul<float>(A,  B,  c_arr);
-  for (int i = 0; i < flat_size; ++i) {
+  spgemmRowWiseMul<float>(C, D, c_arr);
+  for (int i = 0; i < flat_size; ++i)
+  {
     printf("%f ", c_arr[i]);
   }
   printf("\n");
@@ -110,22 +98,14 @@ void testInnPro()
   CSRMatDevice<float> A(4, 4, 7);
   CSCMatDevice<float> B(4, 4, 7);
   // CSRMatDevice<float> C(4, 4, 49);
-  float C[16];
-  std::vector<u_int> a_rp_vec = {0,2,4,6,7};
-  std::vector<u_int> a_ci_vec = {0,1,1,2,0,3,4};
-  std::vector<float> a_va_vec = {1.0,4.0,2.0,3.0,5.0,7.0,8.0};
+  float c_arr[16];
+  std::vector<u_int> a_rp_vec = {0, 2, 4, 6, 7};
+  std::vector<u_int> a_ci_vec = {0, 1, 1, 2, 0, 3, 4};
+  std::vector<float> a_va_vec = {1.0, 4.0, 2.0, 3.0, 5.0, 7.0, 8.0};
 
   std::vector<u_int> b_cp_vec = {0, 2, 4, 6, 7};
   std::vector<u_int> b_ri_vec = {0, 2, 0, 1, 1, 3, 2};
   std::vector<float> b_va_vec = {1.0, 5.0, 4.0, 2.0, 3.0, 9.0, 7.0};
-
-  // cudaMemcpy(A.m_d_rowptr, a_rp_vec.data(), (a_rp_vec.size()+1) * sizeof(u_int), cudaMemcpyHostToDevice);
-  // cudaMemcpy(A.m_d_colidx, a_ci_vec.data(), 9 * sizeof(u_int), cudaMemcpyHostToHost);
-  // cudaMemcpy(A.m_d_val, a_va_vec.data(), 9 * sizeof(float), cudaMemcpyHostToHost);
-
-  // cudaMemcpy(B.m_d_colptr, b_cp_vec.data(), (b_cp_vec.size()+1) * sizeof(u_int), cudaMemcpyHostToHost);
-  // cudaMemcpy(B.m_d_rowidx, b_ri_vec.data(), 9 * sizeof(u_int), cudaMemcpyHostToHost);
-  // cudaMemcpy(B.m_d_val, b_va_vec.data(), 9 * sizeof(float), cudaMemcpyHostToHost);
 
   for (int i = 0; i < 5; ++i)
   {
@@ -149,19 +129,78 @@ void testInnPro()
     B.m_d_val[i] = b_va_vec[i];
   }
 
-  spgemmInnProMul<float>(A, B, C);
+  CSRMatDevice<float> C("../TestMtx/cage3.mtx");
+  CSCMatDevice<float> D("../TestMtx/cage3.mtx");
 
-  for(int i = 0; i < 16; ++i){
-    printf("%f, ",C[i]);
+  spgemmInnProMul<float>(C, D, c_arr);
+
+  for (int i = 0; i < 16; ++i)
+  {
+    printf("%f, ", c_arr[i]);
   }
   printf("\n");
-
-
 }
 
-
-int main()
+void evalRowWise(char *filepath)
 {
-  testRowWise();
+  CSRMatDevice<float> A(filepath);
+  CSRMatDevice<float> B(filepath);
+
+  float *c_arr;
+  int flat_size = A.m_row_size * B.m_col_size;
+  cudaMallocManaged(&c_arr, flat_size * sizeof(float));
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+
+  cudaEventRecord(start, 0);
+  spgemmRowWiseMul<float>(A, B, c_arr);
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+
+  float gpu_elapsed_time_ms = 0;
+  cudaEventElapsedTime(&gpu_elapsed_time_ms, start, stop);
+  printf("GPU test Runing Time (ms): %f \n", gpu_elapsed_time_ms);
+}
+
+void evalInnProd(char *filepath)
+{
+  CSRMatDevice<float> A(filepath);
+  CSCMatDevice<float> B(filepath);
+
+  float *c_arr;
+  int flat_size = A.m_row_size * B.m_col_size;
+  cudaMallocManaged(&c_arr, flat_size * sizeof(float));
+
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+
+  cudaEventRecord(start, 0);
+  spgemmInnProMul<float>(A, B, c_arr);
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+
+  float gpu_elapsed_time_ms = 0;
+  cudaEventElapsedTime(&gpu_elapsed_time_ms, start, stop);
+  printf("GPU test Runing Time (ms): %f \n", gpu_elapsed_time_ms);
+}
+
+char *parse_input(const int &argc, const char *argv[])
+{
+  if (argc != 2)
+  {
+    std::cerr << "Usage: " << argv[0] << "<matrix_path>\n";
+    exit(1);
+  }
+  return (char *)argv[1];
+}
+
+int main(int argc, const char *argv[])
+{
+  char *filepath = parse_input(argc, argv);
+  evalRowWise(filepath);
   return 0;
 }
