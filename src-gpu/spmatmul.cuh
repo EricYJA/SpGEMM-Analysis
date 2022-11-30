@@ -67,18 +67,43 @@ void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice
   countNnzKernel(a_mat, b_mat, c_nnz);
 }
 
+// bottleneck: some threads get sum=0, waste of computation
 template <typename T>
-__global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C)
-{
-  int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
-  int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
+__global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C) {
+    int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
+    int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
 
-  printf("csr_tid: %u, csc_tid: %u\n", csr_tid, csc_tid);
+    printf("csr_tid: %u, csc_tid: %u\n",csr_tid, csc_tid);
 
-  int N = A.m_row_size;
-  // printf("N: %u", N);
-  if (csr_tid < N)
-  {
+    int N = A.m_row_size;
+    T sum = 0.0;
+
+    // printf("N: %u", N);
+    if(csr_tid < N){
+
+        int csr_start = A.m_d_rowptr[csr_tid];
+        int csr_end = A.m_d_rowptr[csr_tid + 1];
+        // int csr_range = A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid];
+        int csr_range = csr_end - csr_start;
+        printf("----csr_start: %u, csr_end: %u, A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid]: %u, csr_range: %u----\n",csr_start,csr_end,A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid], csr_range);
+
+        int csc_start = B.m_d_colptr[csc_tid];
+        int csc_end = B.m_d_colptr[csc_tid + 1];
+
+        int csc_range = csc_end - csc_start;
+        printf("----csc_start: %u, csc_end: %u, csc_range: %u----\n", csc_start, csc_end, csc_range);
+        
+        
+        for(int k = 0; k < csr_range; ++k){
+          for(int n = 0; n < csc_range; ++n){
+            // printf("k: %u, csr_start: %u, csr_end: %u, csr_start - csr_end: %u, (A k, B n): (%u, %u)\nn: %u, csc_start: %u, csc_end: %u, csc_range: %u\n\n", k, csr_start, csr_end, csr_range, A.m_d_colidx[A.m_d_rowptr[csr_tid] + k],B.m_d_rowidx[B.m_d_colptr[csc_tid] + n], n, csc_start, csc_end, csc_range);
+
+            if(A.m_d_colidx[csr_start + k] == B.m_d_rowidx[csc_start + n]){
+                sum += A.m_d_val[csr_start + k] * B.m_d_val[csc_start + n];
+                printf("A col idx: %u, B row idx: %u, A val idx: %u, A val: %f, B val idx: %u, B val: %f\n",A.m_d_colidx[csr_start + k],B.m_d_rowidx[csc_start + n], csr_start + k, A.m_d_val[csr_start + k], csc_start + n, B.m_d_val[csc_start + n]);
+            }
+          }
+        }
 
     int csr_start = A.m_d_rowptr[csr_tid];
     int csr_end = A.m_d_rowptr[csr_tid + 1];
