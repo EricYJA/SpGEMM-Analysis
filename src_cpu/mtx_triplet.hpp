@@ -7,10 +7,6 @@ class MTX_triplet{
         u_int col_idx;
         double val;
 
-        // MTX_triplet();
-        // MTX_triplet(u_int row_idx, u_int col_idx, double val);
-
-
         MTX_triplet(){
             row_idx = 0;
             col_idx = 0;
@@ -22,6 +18,4 @@ class MTX_triplet{
             col_idx = y;
             val = z;
         };
-    
-
 };
