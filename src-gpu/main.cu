@@ -37,22 +37,22 @@ void testSetMatData(CSRMatDevice<float> &spmat, std::vector<int> &a_rp_vec, std:
   }
 }
 
-// void testload()
-// {
-//   int rowsA = 0; /* number of rows of A */
-//   int colsA = 0; /* number of columns of A */
-//   int nnzA = 0;  /* number of nonzeros of A */
+void testload()
+{
+  int rowsA = 0; /* number of rows of A */
+  int colsA = 0; /* number of columns of A */
+  int nnzA = 0;  /* number of nonzeros of A */
 
-//   int *h_csrRowPtrA = NULL;
-//   int *h_csrColIndA = NULL;
-//   float *h_csrValA = NULL;
+  int *h_csrRowPtrA = NULL;
+  int *h_csrColIndA = NULL;
+  float *h_csrValA = NULL;
 
-//   loadMMSparseMatrix<float>("../TestMtx/cage3.mtx", 'd', true, &rowsA,
-//                             &colsA, &nnzA, &h_csrValA, &h_csrRowPtrA,
-//                             &h_csrColIndA, true);
+  loadMMSparseMatrix<float>("../TestMtx/cage3.mtx", 'd', true, &rowsA,
+                            &colsA, &nnzA, &h_csrValA, &h_csrRowPtrA,
+                            &h_csrColIndA, true);
 
-//   printf("%d, %d, %d\n", rowsA, colsA, nnzA);
-// }
+  printf("%d, %d, %d\n", rowsA, colsA, nnzA);
+}
 
 void testNnz()
 {
@@ -77,6 +77,32 @@ void testNnz()
 
   // testMemKernel<<<1, 8>>>(A);
   // cudaDeviceSynchronize();
+}
+
+void testRowWise()
+{
+  std::vector<int> a_rp_vec = {0, 1, 2, 4};
+  std::vector<int> a_ci_vec = {1, 2, 0, 1};
+  std::vector<float> a_va_vec = {10, 11, 12, 13};
+
+  CSRMatDevice<float> A(3, 3, 4);
+  CSRMatDevice<float> B(3, 3, 4);
+
+  testSetMatData(A, a_rp_vec, a_ci_vec, a_va_vec);
+  testSetMatData(B, a_rp_vec, a_ci_vec, a_va_vec);
+
+  int nnz_num = countCsrCsrNnzHost<float>(A, B);
+  printf("%d\n", nnz_num);
+
+  int flat_size = A.m_row_size * B.m_col_size;
+  printf("f_size: %d\n", flat_size); 
+  float* c_arr;
+  cudaMallocManaged(&c_arr, flat_size * sizeof(float));
+  spgemmRowWiseMul<float>(A,  B,  c_arr);
+  for (int i = 0; i < flat_size; ++i) {
+    printf("%f ", c_arr[i]);
+  }
+  printf("\n");
 }
 
 void testInnPro()
@@ -136,8 +162,6 @@ void testInnPro()
 
 int main()
 {
-
-  // testNnz();
-  testInnPro();
+  testRowWise();
   return 0;
 }
