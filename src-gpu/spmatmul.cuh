@@ -60,7 +60,7 @@ u_int countCsrCsrNnzHost(CSRMatDevice<T> A, CSRMatDevice<T> B)
 }
 
 template <typename T>
-__global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, int *c)
+__global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, T *c)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -78,17 +78,17 @@ __global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, int
       {
         int b_val = B.m_d_val[j];
         int col_idx = B.m_d_colidx[j];
-        c[idx * A.m_row_size + col_idx] = a_val * b_val;
+        c[idx * A.m_row_size + col_idx] += a_val * b_val;
       }
     }
   }
 }
 
 template <typename T>
-void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, COOMatDevice<T> C)
+void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, T* c_arr)
 {
-  T* c_arr;
-  cudaMallocManaged(&c_arr, A.m_row_size * B.m_col_size * sizeof(T));
+  spgemmRowWiseMulKernel<<<1, 16>>>(A, B, c_arr);
+  cudaDeviceSynchronize();
 }
 
 // bottleneck: some threads get sum=0, waste of computation
