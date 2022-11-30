@@ -2,6 +2,7 @@
 
 #include "matrix.cuh"
 
+// bottleneck: write on C is hard to parallelize
 template <typename T>
 __global__ void countNnzKernel(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, int *nnz_num)
 {
@@ -73,7 +74,7 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
     int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
     int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
 
-    printf("csr_tid: %u, csc_tid: %u\n",csr_tid, csc_tid);
+    // printf("csr_tid: %u, csc_tid: %u\n",csr_tid, csc_tid);
 
     int N = A.m_row_size;
     T sum = 0.0;
@@ -85,13 +86,13 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
         int csr_end = A.m_d_rowptr[csr_tid + 1];
         // int csr_range = A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid];
         int csr_range = csr_end - csr_start;
-        printf("----csr_start: %u, csr_end: %u, A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid]: %u, csr_range: %u----\n",csr_start,csr_end,A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid], csr_range);
+        // printf("----csr_start: %u, csr_end: %u, A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid]: %u, csr_range: %u----\n",csr_start,csr_end,A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid], csr_range);
 
         int csc_start = B.m_d_colptr[csc_tid];
         int csc_end = B.m_d_colptr[csc_tid + 1];
 
         int csc_range = csc_end - csc_start;
-        printf("----csc_start: %u, csc_end: %u, csc_range: %u----\n", csc_start, csc_end, csc_range);
+        // printf("----csc_start: %u, csc_end: %u, csc_range: %u----\n", csc_start, csc_end, csc_range);
         
         
         for(int k = 0; k < csr_range; ++k){
@@ -100,7 +101,7 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
 
             if(A.m_d_colidx[csr_start + k] == B.m_d_rowidx[csc_start + n]){
                 sum += A.m_d_val[csr_start + k] * B.m_d_val[csc_start + n];
-                printf("A col idx: %u, B row idx: %u, A val idx: %u, A val: %f, B val idx: %u, B val: %f, A * B: %f\n",A.m_d_colidx[csr_start + k],B.m_d_rowidx[csc_start + n], csr_start + k, A.m_d_val[csr_start + k], csc_start + n, B.m_d_val[csc_start + n], A.m_d_val[csr_start + k] * B.m_d_val[csc_start + n]);
+                // printf("A col idx: %u, B row idx: %u, A val idx: %u, A val: %f, B val idx: %u, B val: %f, A * B: %f\n",A.m_d_colidx[csr_start + k],B.m_d_rowidx[csc_start + n], csr_start + k, A.m_d_val[csr_start + k], csc_start + n, B.m_d_val[csc_start + n], A.m_d_val[csr_start + k] * B.m_d_val[csc_start + n]);
             }
           }
         }
@@ -108,7 +109,7 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
     // C.m_d_val[csr_start] = sum;
     // C.m_d_colidx[csc_start] = csc_start;
     // printf("\nc val idx: %u, sum: %f, col idx: %u\n", csr_start, sum, csc_start);
-    printf("sum: %f, csr_tid: %u, N: %u, csc_tid: %u, csr_tid * N + csc_tid: %u\n", sum, csr_tid, N, csc_tid, csr_tid * N + csc_tid);
+    // printf("sum: %f, csr_tid: %u, N: %u, csc_tid: %u, csr_tid * N + csc_tid: %u\n", sum, csr_tid, N, csc_tid, csr_tid * N + csc_tid);
     C[csr_tid * N + csc_tid] = sum;
 
     }
@@ -124,12 +125,14 @@ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float* C)
   dim3 dimGrid(1, 1);
   dim3 dimBlock(4, 4);
 
+  cudaMallocManaged(&C, (A.m_row_size * A.m_row_size) * sizeof(float));
+
   spgemmInnProMulKernel<<<dimGrid, dimBlock>>>(A, B, C);
   cudaDeviceSynchronize();
 }
 
 template <typename T>
-__global__ void spgemmOutProMul(CSCMatDevice<T> A, CSRMatDevice<T> B, COOMatDevice<T> C)
+__global__ void spgemmOutProMulKernel(CSCMatDevice<T> A, CSRMatDevice<T> B, float* C)
 {
   int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
   int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
@@ -142,9 +145,20 @@ __global__ void spgemmOutProMul(CSCMatDevice<T> A, CSRMatDevice<T> B, COOMatDevi
     u_int csc_start = B.m_d_rowptr[csr_tid];
     u_int csc_end = B.m_d_rowptr[csr_tid + 1];
 
-    double sum = 0.0;
+    float sum = 0.0;
 
     // TODO: loop over B, atomic add C
     // TODO: input file output and store CSR/ CSC format
   }
+}
+
+template <typename T>
+void spgemmOutProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float* C){
+  
+  dim3 dimGrid(1, 1);
+  dim3 dimBlock(4, 4);
+
+  cudaMallocManaged(&C, (A.m_row_size * A.m_row_size) * sizeof(float));
+  spgemmOutProMulKernel<<<dimGrid, dimBlock>>>(A, B, C);
+  cudaDeviceSynchronize();
 }
