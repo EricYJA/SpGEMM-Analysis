@@ -72,12 +72,12 @@ __global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, T *
 
     for (int i = a_ci_s; i < a_ci_e; ++i)
     {
-      int a_val = A.m_d_val[i];
+      T a_val = A.m_d_val[i];
       int b_ci_s = B.m_d_rowptr[A.m_d_colidx[i]];
       int b_ci_e = B.m_d_rowptr[A.m_d_colidx[i] + 1];
       for (int j = b_ci_s; j < b_ci_e; ++j)
       {
-        int b_val = B.m_d_val[j];
+        T b_val = B.m_d_val[j];
         int col_idx = B.m_d_colidx[j];
         c[idx * A.m_row_size + col_idx] += a_val * b_val;
       }
@@ -88,7 +88,9 @@ __global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, T *
 template <typename T>
 void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, T* c_arr)
 {
-  spgemmRowWiseMulKernel<<<1, 16>>>(A, B, c_arr);
+  int t_num = 256;
+  int b_num = (A.m_row_size + t_num - 1) / t_num;
+  spgemmRowWiseMulKernel<<<b_num, t_num>>>(A, B, c_arr);
   cudaDeviceSynchronize();
 }
 
