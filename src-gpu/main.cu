@@ -37,22 +37,22 @@ void testSetMatData(CSRMatDevice<float> &spmat, std::vector<int> &a_rp_vec, std:
   }
 }
 
-void testload()
-{
-  int rowsA = 0; /* number of rows of A */
-  int colsA = 0; /* number of columns of A */
-  int nnzA = 0;  /* number of nonzeros of A */
+// void testload()
+// {
+//   int rowsA = 0; /* number of rows of A */
+//   int colsA = 0; /* number of columns of A */
+//   int nnzA = 0;  /* number of nonzeros of A */
 
-  int *h_csrRowPtrA = NULL;
-  int *h_csrColIndA = NULL;
-  float *h_csrValA = NULL;
+//   int *h_csrRowPtrA = NULL;
+//   int *h_csrColIndA = NULL;
+//   float *h_csrValA = NULL;
 
-  loadMMSparseMatrix<float>("../TestMtx/cage3.mtx", 'd', true, &rowsA,
-                            &colsA, &nnzA, &h_csrValA, &h_csrRowPtrA,
-                            &h_csrColIndA, true);
+//   loadMMSparseMatrix<float>("../TestMtx/cage3.mtx", 'd', true, &rowsA,
+//                             &colsA, &nnzA, &h_csrValA, &h_csrRowPtrA,
+//                             &h_csrColIndA, true);
 
-  printf("%d, %d, %d\n", rowsA, colsA, nnzA);
-}
+//   printf("%d, %d, %d\n", rowsA, colsA, nnzA);
+// }
 
 void testNnz()
 {
@@ -83,7 +83,8 @@ void testInnPro()
 {
   CSRMatDevice<float> A(4, 4, 7);
   CSCMatDevice<float> B(4, 4, 7);
-  CSRMatDevice<float> C(4, 4, 49);
+  // CSRMatDevice<float> C(4, 4, 49);
+  float C[16];
   std::vector<u_int> a_rp_vec = {0,2,4,6,7};
   std::vector<u_int> a_ci_vec = {0,1,1,2,0,3,4};
   std::vector<float> a_va_vec = {1.0,4.0,2.0,3.0,5.0,7.0,8.0};
@@ -124,20 +125,14 @@ void testInnPro()
 
   spgemmInnProMul<float>(A, B, C);
 
-  printf("row ptr:\n");
-  for (int i = 0; i < 5; ++i)
-  {
-    printf("%u, ", C.m_d_rowptr[i]);
-  }
-
-  printf("\ncol idx:\n");
-
-  for (int i = 0; i < 9; ++i)
-  {
-    printf("%u,", C.m_d_colidx[i]);
+  for(int i = 0; i < 16; ++i){
+    printf("%f, ",C[i]);
   }
   printf("\n");
+
+
 }
+
 
 int main()
 {
