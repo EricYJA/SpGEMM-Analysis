@@ -9,15 +9,15 @@ __global__ void countNnzKernel(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, int
 
   if (idx < a_mat.m_row_size)
   {
-    u_int mask[b_mat.m_row_size];
+    int mask[b_mat.m_row_size];
 
-    u_int a_ci_s = a_mat.m_d_rowptr[idx];
-    u_int a_ci_e = a_mat.m_d_rowptr[idx + 1];
+    int a_ci_s = a_mat.m_d_rowptr[idx];
+    int a_ci_e = a_mat.m_d_rowptr[idx + 1];
 
     for (int i = a_ci_s; i < a_ci_e; ++i)
     {
-      u_int b_ci_s = b_mat.m_d_rowptr[a_mat.m_d_colidx[i]];
-      u_int b_ci_e = b_mat.m_d_rowptr[a_mat.m_d_colidx[i] + 1];
+      int b_ci_s = b_mat.m_d_rowptr[a_mat.m_d_colidx[i]];
+      int b_ci_e = b_mat.m_d_rowptr[a_mat.m_d_colidx[i] + 1];
       for (int j = b_ci_s; j < b_ci_e; ++j)
       {
         int nz_idx = b_mat.m_d_colidx[j];

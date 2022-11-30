@@ -7,7 +7,7 @@
 template <typename T>
 struct CSRMatDevice
 {
-  CSRMatDevice(u_int row_size, u_int col_size, u_int nnz_size)
+  CSRMatDevice(int row_size, int col_size, int nnz_size)
       : m_row_size(row_size),
         m_col_size(col_size),
         m_nnz(nnz_size)
@@ -17,13 +17,13 @@ struct CSRMatDevice
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
 
-  u_int *m_d_rowptr;
-  u_int *m_d_colidx;
+  int *m_d_rowptr;
+  int *m_d_colidx;
   T *m_d_val;
 
-  u_int m_row_size;
-  u_int m_col_size;
-  u_int m_nnz;
+  int m_row_size;
+  int m_col_size;
+  int m_nnz;
 
 };
 
@@ -31,7 +31,7 @@ struct CSRMatDevice
 template <typename T>
 struct CSCMatDevice
 {
-  CSCMatDevice(u_int row_size, u_int col_size, u_int nnz_size)
+  CSCMatDevice(int row_size, int col_size, int nnz_size)
       : m_row_size(row_size),
         m_col_size(col_size),
         m_nnz(nnz_size)
@@ -41,17 +41,17 @@ struct CSCMatDevice
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
 
-  u_int *m_d_colptr;
-  u_int *m_d_rowidx;
+  int *m_d_colptr;
+  int *m_d_rowidx;
   T *m_d_val;
 
-  u_int m_row_size;
-  u_int m_col_size;
-  u_int m_nnz;
+  int m_row_size;
+  int m_col_size;
+  int m_nnz;
 };
 
 // Flora TODO:
-void resize(u_int rows, u_int cols, u_int nnz){
+void resize(int rows, int cols, int nnz){
     // cudaMallocManage
 }
 
@@ -59,7 +59,7 @@ void resize(u_int rows, u_int cols, u_int nnz){
 template <typename T>
 struct COOMatDevice
 {
-  COOMatDevice(u_int row_size, u_int col_size, u_int nnz_size)
+  COOMatDevice(int row_size, int col_size, int nnz_size)
       : m_row_size(row_size),
         m_col_size(col_size),
         m_nnz(nnz_size)
@@ -69,11 +69,11 @@ struct COOMatDevice
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
 
-  u_int *m_d_rowidx;
-  u_int *m_d_colidx;
+  int *m_d_rowidx;
+  int *m_d_colidx;
   T *m_d_val;
 
-  u_int m_row_size;
-  u_int m_col_size;
-  u_int m_nnz;
+  int m_row_size;
+  int m_col_size;
+  int m_nnz;
 };
