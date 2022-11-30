@@ -46,7 +46,7 @@ void testNnz() {
  void testInnPro(){
   CSRMatDevice<float> A(4, 4, 7);
   CSCMatDevice<float> B(4, 4, 7);
-  CSRMatDevice<float> C(4, 4, 49);
+  COOMatDevice<float> C(4, 4, 49);
   std::vector<u_int> a_rp_vec = {0,2,4,6,7};
   std::vector<u_int> a_ci_vec = {0,1,1,2,0,3,4};
   std::vector<float> a_va_vec = {1.0,4.0,2.0,3.0,5.0,7.0,8.0};

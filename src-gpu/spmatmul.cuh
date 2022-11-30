@@ -41,6 +41,7 @@ void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice
   
 }
 
+// bottleneck: some threads get sum=0, waste of computation
 template <typename T>
 __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRMatDevice<T> C) {
     int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
@@ -49,6 +50,8 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRM
     printf("csr_tid: %u, csc_tid: %u\n",csr_tid, csc_tid);
 
     int N = A.m_row_size;
+    T sum = 0.0;
+
     // printf("N: %u", N);
     if(csr_tid < N){
 
@@ -64,7 +67,6 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, CSRM
         int csc_range = csc_end - csc_start;
         printf("----csc_start: %u, csc_end: %u, csc_range: %u----\n", csc_start, csc_end, csc_range);
         
-        T sum = 0.0;
         
         for(int k = 0; k < csr_range; ++k){
           for(int n = 0; n < csc_range; ++n){
