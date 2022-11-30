@@ -87,8 +87,8 @@ __global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, int
 template <typename T>
 void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, COOMatDevice<T> C)
 {
-  int* c_arr;
-  cudaMallocManaged(&c_arr, A.m_row_size * B.m_col_size * );
+  T* c_arr;
+  cudaMallocManaged(&c_arr, A.m_row_size * B.m_col_size * sizeof(T));
 }
 
 // bottleneck: some threads get sum=0, waste of computation
