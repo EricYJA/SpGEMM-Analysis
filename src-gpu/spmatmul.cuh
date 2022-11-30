@@ -3,24 +3,24 @@
 #include "matrix.cuh"
 
 template <typename T>
-__global__ void countNnzKernel(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, int *nnz_num)
+__global__ void countNnzKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, int *nnz_num)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (idx < a_mat.m_row_size)
+  if (idx < A.m_row_size)
   {
-    int mask[b_mat.m_row_size]; // TODO: can not dynamically allocate array
+    int mask[B.m_row_size]; // TODO: can not dynamically allocate array
 
-    int a_ci_s = a_mat.m_d_rowptr[idx];
-    int a_ci_e = a_mat.m_d_rowptr[idx + 1];
+    int a_ci_s = A.m_d_rowptr[idx];
+    int a_ci_e = A.m_d_rowptr[idx + 1];
 
     for (int i = a_ci_s; i < a_ci_e; ++i)
     {
-      int b_ci_s = b_mat.m_d_rowptr[a_mat.m_d_colidx[i]];
-      int b_ci_e = b_mat.m_d_rowptr[a_mat.m_d_colidx[i] + 1];
+      int b_ci_s = B.m_d_rowptr[A.m_d_colidx[i]];
+      int b_ci_e = B.m_d_rowptr[A.m_d_colidx[i] + 1];
       for (int j = b_ci_s; j < b_ci_e; ++j)
       {
-        int nz_idx = b_mat.m_d_colidx[j];
+        int nz_idx = B.m_d_colidx[j];
         if (mask[nz_idx] != 1)
         {
           mask[nz_idx] = 1;
@@ -60,11 +60,35 @@ u_int countCsrCsrNnzHost(CSRMatDevice<T> A, CSRMatDevice<T> B)
 }
 
 template <typename T>
-void spgemmRowWiseMul(CSRMatDevice<T> a_mat, CSRMatDevice<T> b_mat, COOMatDevice<T> c_mat)
+__global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, int *c)
 {
-  int *c_nnz;
-  cudaMallocManaged(&c_nnz, sizeof(int));
-  countNnzKernel(a_mat, b_mat, c_nnz);
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < A.m_row_size)
+  {
+    int a_ci_s = A.m_d_rowptr[idx];
+    int a_ci_e = A.m_d_rowptr[idx + 1];
+
+    for (int i = a_ci_s; i < a_ci_e; ++i)
+    {
+      int a_val = A.m_d_val[i];
+      int b_ci_s = B.m_d_rowptr[A.m_d_colidx[i]];
+      int b_ci_e = B.m_d_rowptr[A.m_d_colidx[i] + 1];
+      for (int j = b_ci_s; j < b_ci_e; ++j)
+      {
+        int b_val = B.m_d_val[j];
+        int col_idx = B.m_d_colidx[j];
+        c[idx * A.m_row_size + col_idx] = a_val * b_val;
+      }
+    }
+  }
+}
+
+template <typename T>
+void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, COOMatDevice<T> C)
+{
+  int* c_arr;
+  cudaMallocManaged(&c_arr, A.m_row_size * B.m_col_size * );
 }
 
 // bottleneck: some threads get sum=0, waste of computation
