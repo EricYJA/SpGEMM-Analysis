@@ -86,7 +86,7 @@ __global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, T *
 }
 
 template <typename T>
-void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, T* c_arr)
+void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, T *c_arr)
 {
   int t_num = 256;
   int b_num = (A.m_row_size + t_num - 1) / t_num;
@@ -96,77 +96,111 @@ void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, T* c_arr)
 
 // bottleneck: some threads get sum=0, waste of computation
 template <typename T>
-__global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, float* C) {
-    int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
-    int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
+__global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
+{
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  int N = A.m_row_size;
 
-    // printf("csr_tid: %u, csc_tid: %u\n",csr_tid, csc_tid);
+  // printf("tid: %u, N: %u\n", tid, N);
 
-    int N = A.m_row_size;
-    T sum = 0.0;
+  if (tid < N)
+  {
 
-    // printf("N: %u", N);
-    if(csr_tid < N){
+    int csr_start = A.m_d_rowptr[tid];
+    int csr_end = A.m_d_rowptr[tid + 1];
+    int csc_start = B.m_d_colptr[tid];
+    int csc_end = B.m_d_colptr[tid + 1];
 
-        int csr_start = A.m_d_rowptr[csr_tid];
-        int csr_end = A.m_d_rowptr[csr_tid + 1];
-        // int csr_range = A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid];
-        int csr_range = csr_end - csr_start;
-        // printf("----csr_start: %u, csr_end: %u, A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid]: %u, csr_range: %u----\n",csr_start,csr_end,A.m_d_rowptr[csr_tid + 1] - A.m_d_rowptr[csr_tid], csr_range);
+    for (int n = 0; n < N; ++n)
+    {
+      // printf("Loop2: k: %u, n: %u\nA col idx: %u, B row idx: %u, \n\n\n",
+      //       k,
+      //       n,
+      //       A.m_d_colidx[k],
+      //       B.m_d_rowidx[n]
+      //       );
+      float temp_c = 0;
 
-        int csc_start = B.m_d_colptr[csc_tid];
-        int csc_end = B.m_d_colptr[csc_tid + 1];
-
-        int csc_range = csc_end - csc_start;
-        // printf("----csc_start: %u, csc_end: %u, csc_range: %u----\n", csc_start, csc_end, csc_range);
-        
-        
-        for(int k = 0; k < csr_range; ++k){
-          for(int n = 0; n < csc_range; ++n){
-            // printf("k: %u, csr_start: %u, csr_end: %u, csr_start - csr_end: %u, (A k, B n): (%u, %u)\nn: %u, csc_start: %u, csc_end: %u, csc_range: %u\n\n", k, csr_start, csr_end, csr_range, A.m_d_colidx[A.m_d_rowptr[csr_tid] + k],B.m_d_rowidx[B.m_d_colptr[csc_tid] + n], n, csc_start, csc_end, csc_range);
-
-            if(A.m_d_colidx[csr_start + k] == B.m_d_rowidx[csc_start + n]){
-                sum += A.m_d_val[csr_start + k] * B.m_d_val[csc_start + n];
-                // printf("A col idx: %u, B row idx: %u, A val idx: %u, A val: %f, B val idx: %u, B val: %f, A * B: %f\n",A.m_d_colidx[csr_start + k],B.m_d_rowidx[csc_start + n], csr_start + k, A.m_d_val[csr_start + k], csc_start + n, B.m_d_val[csc_start + n], A.m_d_val[csr_start + k] * B.m_d_val[csc_start + n]);
-            }
+      for (int i = B.m_d_colptr[n]; i < B.m_d_colptr[n + 1]; ++i)
+      {
+        for (int k = csr_start; k < csr_end; ++k)
+        {
+          if (A.m_d_colidx[k] == B.m_d_rowidx[i])
+          {
+            temp_c += A.m_d_val[k] * B.m_d_val[i];
+            // printf("\nTRUE: tid: %u,\nk: %u, n: %u, \nA col idx: %u, B row idx: %u, \nA val: %f, B val: %f, \nA * B: %f, c tmp: %f\n",
+            //       tid,
+            //       k,
+            //       n,
+            //       A.m_d_colidx[k],
+            //       B.m_d_rowidx[i],
+            //       A.m_d_val[k],
+            //       B.m_d_val[i],
+            //       A.m_d_val[k] * B.m_d_val[i],
+            //       temp_c);
           }
         }
-
-    // C.m_d_val[csr_start] = sum;
-    // C.m_d_colidx[csc_start] = csc_start;
-    // printf("\nc val idx: %u, sum: %f, col idx: %u\n", csr_start, sum, csc_start);
-    // printf("sum: %f, csr_tid: %u, N: %u, csc_tid: %u, csr_tid * N + csc_tid: %u\n", sum, csr_tid, N, csc_tid, csr_tid * N + csc_tid);
-    C[csr_tid * N + csc_tid] = sum;
-
+      }
+      C[tid * N + n] = temp_c;
     }
+  }
 }
 
 template <typename T>
-void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float* C)
+__global__ void spgemmInnProMulKernel_v2(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
 {
-  // countNnzKernel<<<1, 1>>>(A, B, C); // TODO
-  // C.resize(A.m_row_size, A.m_col_size, C.nnz);
-  // TODO: record time
-  printf("start \n");
-  int grid_rows = (A.m_row_size + 16 - 1) / 16;
-  int grid_cols = (A.m_col_size + 16 - 1) / 16;
-  dim3 dimGrid(grid_rows, grid_cols);
-  dim3 dimBlock(16, 16);
 
-  cudaMallocManaged(&C, (A.m_row_size * A.m_row_size) * sizeof(float));
+  int N = A.m_row_size;
 
-  spgemmInnProMulKernel<<<dimGrid, dimBlock>>>(A, B, C);
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  int csr_tid = tid / N;
+  int csc_tid = tid % N;
+
+  if (tid < N * N)
+  {
+
+    int csr_start = A.m_d_rowptr[csr_tid];
+    int csr_end = A.m_d_rowptr[csr_tid + 1];
+    int csc_start = B.m_d_colptr[csc_tid];
+    int csc_end = B.m_d_colptr[csc_tid + 1];
+
+    float temp_c = 0;
+
+    for (int i = B.m_d_colptr[csc_tid]; i < B.m_d_colptr[csc_tid + 1]; ++i)
+    {
+      for (int k = csr_start; k < csr_end; ++k)
+      {
+        if (A.m_d_colidx[k] == B.m_d_rowidx[i])
+        {
+          temp_c += A.m_d_val[k] * B.m_d_val[i];
+        }
+      }
+    }
+    C[csr_tid * N + csc_tid] = temp_c;
+  }
+}
+
+template <typename T>
+void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
+{
+
+  int t_num = 256;
+  int b_num = (A.m_row_size + t_num - 1) / t_num;
+  // spgemmInnProMulKernel<<<1, 8>>>(A, B, C);
+
+  int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
+  spgemmInnProMulKernel_v2<<<1, 16>>>(A, B, C);
+
   cudaDeviceSynchronize();
 }
 
 template <typename T>
-__global__ void spgemmOutProMulKernel(CSCMatDevice<T> A, CSRMatDevice<T> B, float* C)
+__global__ void spgemmOutProMulKernel(CSCMatDevice<T> A, CSRMatDevice<T> B, float *C)
 {
-  int csr_tid = threadIdx.x + blockDim.x * blockIdx.x;
-  int csc_tid = threadIdx.y + blockDim.y * blockIdx.y;
+  int tid = threadIdx.x + blockDim.x * blockIdx.x;
 
   int N = A.m_row_size;
-  if (csr_tid < N)
+  if (tid < N * N)
   {
     u_int csr_start = A.m_d_colptr[csc_tid];
     u_int csr_end = A.m_d_colptr[csc_tid + 1];
@@ -181,8 +215,9 @@ __global__ void spgemmOutProMulKernel(CSCMatDevice<T> A, CSRMatDevice<T> B, floa
 }
 
 template <typename T>
-void spgemmOutProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float* C){
-  
+void spgemmOutProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
+{
+
   dim3 dimGrid(1, 1);
   dim3 dimBlock(4, 4);
 

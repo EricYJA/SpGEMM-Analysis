@@ -97,14 +97,13 @@ void testInnPro()
 {
   CSRMatDevice<float> A(4, 4, 7);
   CSCMatDevice<float> B(4, 4, 7);
-  // CSRMatDevice<float> C(4, 4, 49);
-  float c_arr[16];
-  std::vector<u_int> a_rp_vec = {0, 2, 4, 6, 7};
-  std::vector<u_int> a_ci_vec = {0, 1, 1, 2, 0, 3, 4};
-  std::vector<float> a_va_vec = {1.0, 4.0, 2.0, 3.0, 5.0, 7.0, 8.0};
 
-  std::vector<u_int> b_cp_vec = {0, 2, 4, 6, 7};
-  std::vector<u_int> b_ri_vec = {0, 2, 0, 1, 1, 3, 2};
+  std::vector<int> a_rp_vec = {0, 2, 4, 6, 7};
+  std::vector<int> a_ci_vec = {0, 1, 1, 2, 0, 3, 2};
+  std::vector<float> a_va_vec = {1.0, 4.0, 2.0, 3.0, 5.0, 7.0, 9.0};
+
+  std::vector<int> b_cp_vec = {0, 2, 4, 6, 7};
+  std::vector<int> b_ri_vec = {0, 2, 0, 1, 1, 3, 2};
   std::vector<float> b_va_vec = {1.0, 5.0, 4.0, 2.0, 3.0, 9.0, 7.0};
 
   for (int i = 0; i < 5; ++i)
@@ -129,14 +128,17 @@ void testInnPro()
     B.m_d_val[i] = b_va_vec[i];
   }
 
-  CSRMatDevice<float> C("../TestMtx/cage3.mtx");
-  CSCMatDevice<float> D("../TestMtx/cage3.mtx");
+  // CSRMatDevice<float> C("../TestMtx/cage3.mtx");
+  // CSCMatDevice<float> D("../TestMtx/cage3.mtx");
 
-  spgemmInnProMul<float>(C, D, c_arr);
+  float* c;
+  cudaMallocManaged(&c, (A.m_row_size * A.m_row_size) * sizeof(float));
+  
+  spgemmInnProMul<float>(A, B, c);
 
   for (int i = 0; i < 16; ++i)
   {
-    printf("%f, ", c_arr[i]);
+    printf("%f, ", c[i]);
   }
   printf("\n");
 }
@@ -200,7 +202,9 @@ char *parse_input(const int &argc, const char *argv[])
 
 int main(int argc, const char *argv[])
 {
-  char *filepath = parse_input(argc, argv);
-  evalInnProd(filepath);
+  // char *filepath = parse_input(argc, argv);
+  // evalInnProd(filepath);
+
+  testInnPro();
   return 0;
 }
