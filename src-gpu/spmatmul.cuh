@@ -148,8 +148,10 @@ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float* C)
   // C.resize(A.m_row_size, A.m_col_size, C.nnz);
   // TODO: record time
   printf("start \n");
-  dim3 dimGrid(1, 1);
-  dim3 dimBlock(4, 4);
+  int grid_rows = (A.m_row_size + 16 - 1) / 16;
+  int grid_cols = (A.m_col_size + 16 - 1) / 16;
+  dim3 dimGrid(grid_rows, grid_cols);
+  dim3 dimBlock(16, 16);
 
   cudaMallocManaged(&C, (A.m_row_size * A.m_row_size) * sizeof(float));
 

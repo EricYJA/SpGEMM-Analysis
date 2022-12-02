@@ -201,6 +201,6 @@ char *parse_input(const int &argc, const char *argv[])
 int main(int argc, const char *argv[])
 {
   char *filepath = parse_input(argc, argv);
-  evalRowWise(filepath);
+  evalInnProd(filepath);
   return 0;
 }
