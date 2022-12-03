@@ -23,9 +23,6 @@ struct CSRMatDevice
 
   CSRMatDevice(char *filepath)
   {
-    // int rowsA = 0; /* number of rows of A */
-    // int colsA = 0; /* number of columns of A */
-    // int nnzA = 0;  /* number of nonzeros of A */
     int baseA = 0;
 
     int *h_csrRowPtrA = NULL;
@@ -65,6 +62,7 @@ struct CSRMatDevice
   int m_nnz;
 };
 
+
 template <typename T>
 struct CSCMatDevice
 {
@@ -77,6 +75,7 @@ struct CSCMatDevice
     CUDAERR(cudaMallocManaged(&m_d_rowidx, m_nnz * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
+
 
   CSCMatDevice(char *filepath)
   {
@@ -122,11 +121,6 @@ struct CSCMatDevice
   int m_nnz;
 };
 
-// Flora TODO:
-void resize(int rows, int cols, int nnz)
-{
-  // cudaMallocManage
-}
 
 template <typename T>
 struct COOMatDevice

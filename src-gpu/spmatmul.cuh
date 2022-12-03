@@ -60,6 +60,7 @@ int countCsrCsrNnzHost(CSRMatDevice<T> A, CSRMatDevice<T> B)
   return nnz;
 }
 
+/* parallel for A rows */
 template <typename T>
 __global__ void spgemmRowWiseMulKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, T *c)
 {
@@ -94,7 +95,9 @@ void spgemmRowWiseMul(CSRMatDevice<T> A, CSRMatDevice<T> B, T *c_arr)
   cudaDeviceSynchronize();
 }
 
-// bottleneck: some threads get sum=0, waste of computation
+/* bottleneck: some threads get sum=0, waste of computation
+ * parallel for C entry, same as basic GEMM
+ */
 template <typename T>
 __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
 {
@@ -158,7 +161,6 @@ __global__ void spgemmInnProMulKernel_v2(CSRMatDevice<T> A, CSCMatDevice<T> B, f
 
   if (tid < N * N)
   {
-
     int csr_start = A.m_d_rowptr[csr_tid];
     int csr_end = A.m_d_rowptr[csr_tid + 1];
     int csc_start = B.m_d_colptr[csc_tid];
@@ -183,8 +185,8 @@ __global__ void spgemmInnProMulKernel_v2(CSRMatDevice<T> A, CSCMatDevice<T> B, f
 template <typename T>
 void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
 {
-
   int t_num = 256;
+
   // int b_num = (A.m_row_size + t_num - 1) / t_num;
   // spgemmInnProMulKernel<<<1, 8>>>(A, B, C);
 
@@ -194,37 +196,27 @@ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
   cudaDeviceSynchronize();
 }
 
+/* parallel for B columns */
 template <typename T>
 __global__ void spgemmOutProMulKernel(CSCMatDevice<T> A, CSRMatDevice<T> B, float *C)
 {
   int tid = threadIdx.x + blockDim.x * blockIdx.x;
   int N = A.m_row_size;
 
-  int csr_tid = tid / N;
-  int csc_tid = tid % N;
-
-  if (tid < N * N)
+  if (tid < N)
   {
-    int csc_start = A.m_d_colptr[csc_tid];
-    int csc_end = A.m_d_colptr[csc_tid + 1];
-    int csr_start = B.m_d_rowptr[csr_tid];
-    int csr_end = B.m_d_rowptr[csr_tid + 1];
-    for (int m = csc_start; m < csc_end; ++m)
+    int a_cp_s = A.m_d_colptr[tid];
+    int a_cp_e = A.m_d_colptr[tid + 1];
+    int b_rp_s = B.m_d_rowptr[tid];
+    int b_rp_e = B.m_d_rowptr[tid + 1];
+
+    for (int m = a_cp_s; m < a_cp_e; ++m)
     {
-      for (int n = csr_start; n < csr_end; ++n)
+      for (int n = b_rp_s; n < b_rp_e; ++n)
       {
-        C[csr_tid * N + csc_tid] += A.m_d_val[m] * B.m_d_val[n];
-        printf("\ntid: %u,\nm: %u, n: %u, \nA col idx: %u, B row idx: %u, \nA val: %f, B val: %f, \nA * B: %f, c tmp: %f, c idx: %u\n",
-              tid,
-              m,
-              n,
-              A.m_d_rowidx[m],
-              B.m_d_colidx[n],
-              A.m_d_val[m],
-              B.m_d_val[n],
-              A.m_d_val[m] * B.m_d_val[n],
-              C[csr_tid * N + csc_tid],
-              csr_tid * N + csc_tid);
+        int row_idx = A.m_d_rowidx[m];
+        int col_idx = B.m_d_colidx[n];
+        atomicAdd(&C[row_idx * N + col_idx], A.m_d_val[m] * B.m_d_val[n]);
       }
     }
   }
@@ -236,7 +228,6 @@ void spgemmOutProMul(CSCMatDevice<T> A, CSRMatDevice<T> B, float *C)
   int t_num = 256;
   int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
 
-  cudaMallocManaged(&C, (A.m_row_size * A.m_row_size) * sizeof(float));
-  spgemmOutProMulKernel<<<1, 16>>>(A, B, C);
+  spgemmOutProMulKernel<<<b_num, t_num>>>(A, B, C);
   cudaDeviceSynchronize();
 }

@@ -98,9 +98,6 @@ void testRowWise()
 
   printf("%d, %d, %d\n", C.m_d_rowptr[0], C.m_d_rowptr[1], C.m_d_rowptr[2]);
 
-  // testMemKernel<<<1, 8>>>(C);
-  // cudaDeviceSynchronize();
-
   int flat_size = C.m_row_size * D.m_col_size;
   printf("f_size: %d\n", flat_size);
   float *c_arr;
@@ -180,7 +177,7 @@ void testOutPro()
   std::vector<float> b_va_vec = {1.0, 5.0, 4.0, 2.0, 3.0, 9.0, 7.0};
 
   testSetMatData(A, a_rp_vec, a_ci_vec, a_va_vec);
-  testSetMatData(B, a_rp_vec, a_ci_vec, a_va_vec);
+  testSetMatData(B, b_cp_vec, b_ri_vec, b_va_vec);
 
   float *c;
   cudaMallocManaged(&c, (A.m_row_size * A.m_row_size) * sizeof(float));
