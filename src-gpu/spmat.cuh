@@ -23,6 +23,8 @@ struct CSRMatDevice
 
   CSRMatDevice(char *filepath)
   {
+    printf("load [ %s ] as CSR\n", filepath);
+
     int baseA = 0;
 
     int *h_csrRowPtrA = NULL;
@@ -35,7 +37,7 @@ struct CSRMatDevice
 
     baseA = h_csrRowPtrA[0]; // baseA = {0,1}
 
-    printf("%d, %d, %d\n", m_row_size, m_col_size, m_nnz);
+    printf("row_size: %d, col_size %d, nnz: %d\n", m_row_size, m_col_size, m_nnz);
 
     CUDAERR(cudaMallocManaged(&m_d_rowptr, (m_row_size + 1) * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_colidx, m_nnz * sizeof(T)));
@@ -79,9 +81,8 @@ struct CSCMatDevice
 
   CSCMatDevice(char *filepath)
   {
-    // int rowsA = 0; /* number of rows of A */
-    // int colsA = 0; /* number of columns of A */
-    // int nnzA = 0;  /* number of nonzeros of A */
+    printf("load [ %s ] as CSC \n", filepath);
+
     int baseA = 0;
 
     int *h_cscRowIdxA = NULL;
@@ -94,7 +95,7 @@ struct CSCMatDevice
 
     baseA = h_cscColPtrA[0]; // baseA = {0,1}
 
-    printf("%d, %d, %d\n", m_row_size, m_col_size, m_nnz);
+    printf("row_size: %d, col_size %d, nnz: %d\n", m_row_size, m_col_size, m_nnz);
 
     CUDAERR(cudaMallocManaged(&m_d_colptr, (m_row_size + 1) * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_rowidx, m_nnz * sizeof(T)));

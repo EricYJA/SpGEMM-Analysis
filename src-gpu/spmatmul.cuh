@@ -1,6 +1,6 @@
 #pragma once
 
-#include "matrix.cuh"
+#include "spmat.cuh"
 
 // bottleneck: write on C is hard to parallelize
 template <typename T>
