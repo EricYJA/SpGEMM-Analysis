@@ -1,5 +1,5 @@
 TMPDIR=~ ncu                            \
---export "profile-rw.ncu-rep"              \
+--export "profile-ip.ncu-rep"              \
 --force-overwrite                       \
 --target-processes all                  \
 --replay-mode kernel                    \
@@ -25,4 +25,4 @@ TMPDIR=~ ncu                            \
 --clock-control base                    \
 --apply-rules yes                       \
 --import-source no                      \
---check-exit-code yes "main" rw ../test_mtx/s10000/c-39.mtx
+--check-exit-code yes "main" ip ../test_mtx/s4000/freeFlyingRobot_7.mtx

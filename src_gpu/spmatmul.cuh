@@ -104,8 +104,6 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
   int tid = threadIdx.x + blockDim.x * blockIdx.x;
   int N = A.m_row_size;
 
-  // printf("tid: %u, N: %u\n", tid, N);
-
   if (tid < N)
   {
 
@@ -116,12 +114,6 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
 
     for (int n = 0; n < N; ++n)
     {
-      // printf("Loop2: k: %u, n: %u\nA col idx: %u, B row idx: %u, \n\n\n",
-      //       k,
-      //       n,
-      //       A.m_d_colidx[k],
-      //       B.m_d_rowidx[n]
-      //       );
       float temp_c = 0;
 
       for (int i = B.m_d_colptr[n]; i < B.m_d_colptr[n + 1]; ++i)
@@ -131,16 +123,6 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
           if (A.m_d_colidx[k] == B.m_d_rowidx[i])
           {
             temp_c += A.m_d_val[k] * B.m_d_val[i];
-            // printf("\nTRUE: tid: %u,\nk: %u, n: %u, \nA col idx: %u, B row idx: %u, \nA val: %f, B val: %f, \nA * B: %f, c tmp: %f\n",
-            //       tid,
-            //       k,
-            //       n,
-            //       A.m_d_colidx[k],
-            //       B.m_d_rowidx[i],
-            //       A.m_d_val[k],
-            //       B.m_d_val[i],
-            //       A.m_d_val[k] * B.m_d_val[i],
-            //       temp_c);
           }
         }
       }
@@ -188,7 +170,7 @@ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
   int t_num = 256;
 
   // int b_num = (A.m_row_size + t_num - 1) / t_num;
-  // spgemmInnProMulKernel<<<1, 8>>>(A, B, C);
+  // spgemmInnProMulKernel<<<b_num, t_num>>>(A, B, C);
 
   int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
   spgemmInnProMulKernel_v2<<<b_num, t_num>>>(A, B, C);
