@@ -64,7 +64,6 @@ struct CSRMatDevice
   int m_nnz;
 };
 
-
 template <typename T>
 struct CSCMatDevice
 {
@@ -77,7 +76,6 @@ struct CSCMatDevice
     CUDAERR(cudaMallocManaged(&m_d_rowidx, m_nnz * sizeof(T)));
     CUDAERR(cudaMallocManaged(&m_d_val, m_nnz * sizeof(T)));
   }
-
 
   CSCMatDevice(char *filepath)
   {
@@ -121,7 +119,6 @@ struct CSCMatDevice
   int m_col_size;
   int m_nnz;
 };
-
 
 template <typename T>
 struct COOMatDevice

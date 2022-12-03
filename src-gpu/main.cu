@@ -104,5 +104,6 @@ int main(int argc, const char *argv[])
     std::cerr << "Unknown dataflow " << argv[1] << " \n";
     exit(1);
   }
+
   return 0;
 }
