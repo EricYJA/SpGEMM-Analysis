@@ -9,6 +9,16 @@ Analysis of the performance for different SPGEMM dataflow
 ├── README.md 
 ├── src_cpu // the cpu test&ref code
 ├── src_gpu // the core implementation
+│   ├── error_check.cuh 
+│   ├── main.cu
+│   ├── Makefile
+│   ├── mmio.c // code from matrix market io
+│   ├── mmio.h // code from matrix market io
+│   ├── mmio_wrapper.cpp // code from cuda example
+│   ├── run_ncu.sh
+│   ├── spmat.cuh
+│   ├── spmatmul.cuh
+│   └── spmattest.cuh
 └── test_mtx // the test data
 ```
 
