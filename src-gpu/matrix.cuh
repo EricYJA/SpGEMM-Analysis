@@ -36,7 +36,7 @@ struct CSRMatDevice
                           &m_col_size, &m_nnz, &h_csrValA, &h_csrRowPtrA,
                           &h_csrColIndA, true);
 
-    baseA = h_csrRowPtrA[0];  // baseA = {0,1}
+    baseA = h_csrRowPtrA[0]; // baseA = {0,1}
 
     printf("%d, %d, %d\n", m_row_size, m_col_size, m_nnz);
 
@@ -93,7 +93,7 @@ struct CSCMatDevice
                           &m_col_size, &m_nnz, &h_cscValA, &h_cscRowIdxA,
                           &h_cscColPtrA, true);
 
-    baseA = h_cscColPtrA[0];  // baseA = {0,1}
+    baseA = h_cscColPtrA[0]; // baseA = {0,1}
 
     printf("%d, %d, %d\n", m_row_size, m_col_size, m_nnz);
 

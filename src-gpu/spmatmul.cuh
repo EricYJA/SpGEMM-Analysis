@@ -33,21 +33,21 @@ __global__ void countNnzKernel(CSRMatDevice<T> A, CSRMatDevice<T> B, int *nnz_nu
 }
 
 template <typename T>
-u_int countCsrCsrNnzHost(CSRMatDevice<T> A, CSRMatDevice<T> B)
+int countCsrCsrNnzHost(CSRMatDevice<T> A, CSRMatDevice<T> B)
 {
-  u_int nnz = 0;
-  u_int mask[B.m_col_size];
+  int nnz = 0;
+  int mask[B.m_col_size];
 
-  u_int a_rows = A.m_row_size;
-  for (u_int m = 0; m < a_rows; ++m)
+  int a_rows = A.m_row_size;
+  for (int m = 0; m < a_rows; ++m)
   {
-    for (u_int jj = A.m_d_rowptr[m]; jj < A.m_d_rowptr[m + 1]; ++jj)
+    for (int jj = A.m_d_rowptr[m]; jj < A.m_d_rowptr[m + 1]; ++jj)
     {
-      u_int j = A.m_d_colidx[jj];
+      int j = A.m_d_colidx[jj];
 
-      for (u_int kk = B.m_d_rowptr[j]; kk < B.m_d_rowptr[j + 1]; ++kk)
+      for (int kk = B.m_d_rowptr[j]; kk < B.m_d_rowptr[j + 1]; ++kk)
       {
-        u_int k = B.m_d_colidx[kk];
+        int k = B.m_d_colidx[kk];
 
         if (mask[k] != m)
         {
@@ -166,7 +166,7 @@ __global__ void spgemmInnProMulKernel_v2(CSRMatDevice<T> A, CSCMatDevice<T> B, f
 
     float temp_c = 0;
 
-    for (int i = B.m_d_colptr[csc_tid]; i < B.m_d_colptr[csc_tid + 1]; ++i)
+    for (int i = csc_start; i < csc_end; ++i)
     {
       for (int k = csr_start; k < csr_end; ++k)
       {
@@ -185,7 +185,7 @@ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
 {
 
   int t_num = 256;
-  int b_num = (A.m_row_size + t_num - 1) / t_num;
+  // int b_num = (A.m_row_size + t_num - 1) / t_num;
   // spgemmInnProMulKernel<<<1, 8>>>(A, B, C);
 
   int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
@@ -198,30 +198,45 @@ template <typename T>
 __global__ void spgemmOutProMulKernel(CSCMatDevice<T> A, CSRMatDevice<T> B, float *C)
 {
   int tid = threadIdx.x + blockDim.x * blockIdx.x;
-
   int N = A.m_row_size;
+
+  int csr_tid = tid / N;
+  int csc_tid = tid % N;
+
   if (tid < N * N)
   {
-    u_int csr_start = A.m_d_colptr[csc_tid];
-    u_int csr_end = A.m_d_colptr[csc_tid + 1];
-    u_int csc_start = B.m_d_rowptr[csr_tid];
-    u_int csc_end = B.m_d_rowptr[csr_tid + 1];
-
-    float sum = 0.0;
-
-    // TODO: loop over B, atomic add C
-    // TODO: input file output and store CSR/ CSC format
+    int csc_start = A.m_d_colptr[csc_tid];
+    int csc_end = A.m_d_colptr[csc_tid + 1];
+    int csr_start = B.m_d_rowptr[csr_tid];
+    int csr_end = B.m_d_rowptr[csr_tid + 1];
+    for (int m = csc_start; m < csc_end; ++m)
+    {
+      for (int n = csr_start; n < csr_end; ++n)
+      {
+        C[csr_tid * N + csc_tid] += A.m_d_val[m] * B.m_d_val[n];
+        printf("\ntid: %u,\nm: %u, n: %u, \nA col idx: %u, B row idx: %u, \nA val: %f, B val: %f, \nA * B: %f, c tmp: %f, c idx: %u\n",
+              tid,
+              m,
+              n,
+              A.m_d_rowidx[m],
+              B.m_d_colidx[n],
+              A.m_d_val[m],
+              B.m_d_val[n],
+              A.m_d_val[m] * B.m_d_val[n],
+              C[csr_tid * N + csc_tid],
+              csr_tid * N + csc_tid);
+      }
+    }
   }
 }
 
 template <typename T>
-void spgemmOutProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
+void spgemmOutProMul(CSCMatDevice<T> A, CSRMatDevice<T> B, float *C)
 {
-
-  dim3 dimGrid(1, 1);
-  dim3 dimBlock(4, 4);
+  int t_num = 256;
+  int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
 
   cudaMallocManaged(&C, (A.m_row_size * A.m_row_size) * sizeof(float));
-  spgemmOutProMulKernel<<<dimGrid, dimBlock>>>(A, B, C);
+  spgemmOutProMulKernel<<<1, 16>>>(A, B, C);
   cudaDeviceSynchronize();
 }

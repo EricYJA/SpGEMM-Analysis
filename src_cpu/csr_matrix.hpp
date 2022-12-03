@@ -98,4 +98,4 @@ public:
     csr_row = (u_int *)malloc(row_num * sizeof(u_int));
     csr_val = (double *)malloc(nnz * sizeof(double));
   }
-}
+};

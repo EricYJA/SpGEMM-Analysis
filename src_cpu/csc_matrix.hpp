@@ -84,4 +84,4 @@ public:
 
     nnz = csc_col[itr];
   };
-}
+};
