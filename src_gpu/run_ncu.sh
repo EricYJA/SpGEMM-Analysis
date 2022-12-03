@@ -1,0 +1,28 @@
+TMPDIR=~ ncu                            \
+--export "profile-rw.ncu-rep"              \
+--force-overwrite                       \
+--target-processes all                  \
+--replay-mode kernel                    \
+--kernel-name-base function             \
+--launch-skip-before-match 0            \
+--section ComputeWorkloadAnalysis       \
+--section InstructionStats              \
+--section LaunchStats                   \
+--section MemoryWorkloadAnalysis        \
+--section MemoryWorkloadAnalysis_Chart  \
+--section MemoryWorkloadAnalysis_Tables \
+--section Occupancy                     \
+--section SchedulerStats                \
+--section SourceCounters                \
+--section SpeedOfLight                  \
+--section SpeedOfLight_RooflineChart    \
+--section WarpStateStats                \
+--sampling-interval auto                \
+--sampling-max-passes 15                \
+--sampling-buffer-size 33554432         \
+--profile-from-start 1                  \
+--cache-control none                    \
+--clock-control base                    \
+--apply-rules yes                       \
+--import-source no                      \
+--check-exit-code yes "main" rw ../test_mtx/s10000/c-39.mtx

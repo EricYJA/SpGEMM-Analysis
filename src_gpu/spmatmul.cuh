@@ -191,7 +191,7 @@ void spgemmInnProMul(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
   // spgemmInnProMulKernel<<<1, 8>>>(A, B, C);
 
   int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
-  spgemmInnProMulKernel_v2<<<1, 16>>>(A, B, C);
+  spgemmInnProMulKernel_v2<<<b_num, t_num>>>(A, B, C);
 
   cudaDeviceSynchronize();
 }
