@@ -31,4 +31,13 @@ $ ./main rw ../test_mtx/s100/nos4.mtx
 $ make clean
 ```
 
+### Executable 
+
+```
+./main <dataflow_type{ip, op, rw}> <matrix_path>
+```
+- ip: inner product dataflow
+- op: outer product dataflow
+- rw: row-wise product dataflow
+
 
