@@ -76,6 +76,40 @@ void testNnz()
   cudaDeviceSynchronize();
 }
 
+void testCountSize(){
+  CSRMatDevice<float> A(4, 4, 7);
+  CSCMatDevice<float> B(4, 4, 7);
+
+  std::vector<int> a_rp_vec = {0, 2, 4, 6, 7};
+  std::vector<int> a_ci_vec = {0, 1, 1, 2, 0, 3, 2};
+  std::vector<float> a_va_vec = {1.0, 4.0, 2.0, 3.0, 5.0, 7.0, 9.0};
+
+  std::vector<int> b_cp_vec = {0, 2, 4, 6, 7};
+  std::vector<int> b_ri_vec = {0, 2, 0, 1, 1, 3, 2};
+  std::vector<float> b_va_vec = {1.0, 5.0, 4.0, 2.0, 3.0, 9.0, 7.0};
+
+  testSetMatData(A, a_rp_vec, a_ci_vec, a_va_vec);
+  testSetMatData(B, a_rp_vec, a_ci_vec, a_va_vec);
+
+  float *c;
+  cudaMallocManaged(&c, (A.m_row_size * A.m_row_size) * sizeof(float));
+
+  int *count;
+  cudaMallocManaged(&count, sizeof(int));
+
+
+  spgemmInnProMul<float>(A, B, c);
+//   spgemmSizeCount<float>(A, B, count);
+
+  // printf("%d",count);
+
+  for (int i = 0; i < 16; ++i)
+  {
+    printf("%f, ", c[i]);
+  }
+  printf("\n");
+}
+
 void testRowWise()
 {
   std::vector<int> a_rp_vec = {0, 1, 2, 4};

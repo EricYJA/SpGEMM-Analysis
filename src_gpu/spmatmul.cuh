@@ -131,6 +131,55 @@ __global__ void spgemmInnProMulKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, floa
   }
 }
 
+// template <typename T>
+// __global__ void spgemmSizeCountKernel(CSRMatDevice<T> A, CSCMatDevice<T> B, int* count)
+// {
+
+//   int N = A.m_row_size;
+
+//   int tid = threadIdx.x + blockDim.x * blockIdx.x;
+//   int csr_tid = tid / N;
+//   int csc_tid = tid % N;
+
+//   if (tid < N * N)
+//   {
+//     int csr_start = A.m_d_rowptr[csr_tid];
+//     int csr_end = A.m_d_rowptr[csr_tid + 1];
+//     int csc_start = B.m_d_colptr[csc_tid];
+//     int csc_end = B.m_d_colptr[csc_tid + 1];
+
+//     *count = 0;
+
+//     for (int i = csc_start; i < csc_end; ++i)
+//     {
+//       for (int k = csr_start; k < csr_end; ++k)
+//       {
+//         if (A.m_d_colidx[k] == B.m_d_rowidx[i])
+//         {
+//           if(A.m_d_val[k] * B.m_d_val[i] != 0){
+//             (*count)++;
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+
+
+// template <typename T>
+// void spgemmSizeCount(CSRMatDevice<T> A, CSCMatDevice<T> B, int* count)
+// {
+//   int t_num = 256;
+
+//   // int b_num = (A.m_row_size + t_num - 1) / t_num;
+//   // spgemmInnProMulKernel<<<b_num, t_num>>>(A, B, C);
+
+//   int b_num = (A.m_row_size * A.m_row_size + t_num - 1) / t_num;
+//   int count = spgemmSizeCountKernel<<<b_num, t_num>>>(A, B, count);
+
+//   cudaDeviceSynchronize();
+// }
+
 template <typename T>
 __global__ void spgemmInnProMulKernel_v2(CSRMatDevice<T> A, CSCMatDevice<T> B, float *C)
 {

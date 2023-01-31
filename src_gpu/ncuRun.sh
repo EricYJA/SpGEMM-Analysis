@@ -25,4 +25,4 @@ TMPDIR=~ ncu                            \
 --clock-control base                    \
 --apply-rules yes                       \
 --import-source no                      \
---check-exit-code yes "main" ip ../test_mtx/s4000/freeFlyingRobot_7.mtx
+--check-exit-code yes src_gpu/./main ip /data/toodemuy/datasets/SNAP/amazon0302.mtx*

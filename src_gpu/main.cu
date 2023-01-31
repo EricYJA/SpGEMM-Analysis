@@ -84,7 +84,7 @@ int main(int argc, const char *argv[])
   if (argc != 3)
   {
     std::cerr << "Usage: " << argv[0] << " <dataflow_type{ip, op, rw}> <matrix_path>\n";
-    exit(1);
+    exit(2);
   }
 
   if (strcmp(argv[1], "ip") == 0)
